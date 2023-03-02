@@ -664,7 +664,7 @@ zenith0 <- zenith0 + abs(zenith-zenith_sd) # From end of Alt. Calib. section
 #                Don't want > 0.18, but need some smoothing.
 #                Smaller is always better, but increase if too much noise
 
-path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol = 0.08)
+path <- thresholdPath(twl$Twilight, twl$Rise, zenith = zenith, tol = 0.15)
 
 # Steffi's workflow for visualizing
 coords <- data.frame(time = with_tz(path$time, "UTC"),
@@ -781,18 +781,18 @@ summary(sm)
 # Clean up - Try to omit some crazy variation in lat/lon
 sm <- filter(sm, Lat.sd < 8, Lon.sd < 8)
 
-xlim <- range(coords$lon + c(-35, 35))
-ylim <- range(coords$lat + c(-15, 15))
+xlim <- range(coords$lon + c(-5, 5))
+ylim <- range(coords$lat + c(-5, 5))
 
 r <- raster::raster(nrows = 2 * diff(ylim), ncols = 2 * diff(xlim), xmn = xlim[1]-5,
                     xmx = xlim[2]+5, ymn = ylim[1]-5, ymx = ylim[2]+5, crs = 4326)
 s <- slices(type = "intermediate", breaks = "week", mcmc = fit, grid = r)
 sk <- SGAT::slice(s, sliceIndices(s))
 
-# Convert to starts to sf for plotting
+# Convert to stars to sf for plotting
 sk_st <- stars::st_as_stars(sk) %>%
   st_as_sf() %>%
-  mutate(layer = if_else(layer < 1, NA_real_, layer))  # If less than 1, don't plot
+  mutate(layer = if_else(layer < 5, NA_real_, layer))  # If less than 1, don't plot
 
 tracks <- dplyr::select(sm, lon = "Lon.50%", lat = "Lat.50%", Lat.sd, Lon.sd, "Time1") %>%
   mutate(year = year(Time1)) %>%
@@ -806,7 +806,7 @@ g <- ggplot(sk_st) +
   theme_bw() +
   geom_sf(aes(fill = layer), colour = NA) +
   geom_sf(data = north_america, fill = NA, colour = "black", linewidth = 1) +
-  scale_fill_viridis_c(na.value = NA)
+  scale_fill_viridis_c(na.value = NA, option = "turbo")
 
 g
 
@@ -1068,12 +1068,13 @@ paths <- tracks %>%
 g <- ggplot(sk_st) +
   theme_bw() +
   geom_sf(aes(fill = layer), colour = NA) +
-  geom_sf(data = north_america, fill = NA, colour = "black", linewidth = 1) +
-  scale_fill_viridis_c(na.value = NA)
+  geom_sf(data = north_america, fill = NA, colour = "black", linewidth = 0.4) +
+  scale_fill_viridis_c(na.value = NA, option = "turbo")
 
 g
 
-g + geom_sf(data = tracks) +
+g +
+  geom_sf(data = tracks) +
   geom_sf(data = paths) +
   facet_wrap(~year)
 
