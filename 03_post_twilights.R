@@ -20,7 +20,9 @@ lon_calib <- -120.33
 lat_calib <- 50.67
 
 # Map for plots
-north_america <- ne_countries(continent = "North America", returnclass = "sf")
+north_america <- ne_states(country = c("United States of America", "Canada"),
+                           returnclass = "sf") %>%
+  filter(!name %in% c("Hawaii", "Alaska"))
 
 
 ## Movement models ---------------------
